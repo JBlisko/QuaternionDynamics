@@ -53,11 +53,6 @@ for n=1:11
     rot_vec_bod_exp = quat_rot_vec(rot_vec_bod_exp_0,new_quat_bod_exp);
     rot_vec_bod_exp_0 = rot_vec_bod_exp;
     
-    % Attempt to get euler angles out from the quaternion but noticed weird
-    % error in the calculation. Check again.
-    %eul_ang = quat_to_angles(q);
-    %eul_ang_deg = eul_ang*180/pi;
-    
     % Plot using labe frame method
     quiver3( 0,0,0, rot_vec_lab_ode(1), rot_vec_lab_ode(2), rot_vec_lab_ode(3), 'r' );
     
@@ -75,7 +70,7 @@ hold off
 
 %% Functions
 function [qinit] = find_q_init(beta,gamma)
-    vec=[1 0 0]';
+    vec=[1 0 0]'; % WLOG we assume the initial orientation is along the x-axis
     rho = [cos(gamma)*cos(beta); sin(gamma)*cos(beta); -sin(beta)];
     
     qinit_0 = [1+dot(vec,rho);cross(vec,rho)];
@@ -89,9 +84,10 @@ function [rot_vec] = quat_rot_vec(vec,quat)
     rot_vec = vec + 2*cross(r, s*vec + cross(r,vec));
 end
 
-% Note, this has to be in world frame formulation of quaternion dynamics.
+% Note: This has to be in world frame formulation of quaternion dynamics.
 % Otherwise, the order of quaternions is opposite and the dynamics becomes
 % incorrect.
+
 % Lab frame formulation - system of ODEs
 function [new_quat] = quat_ode(omega,dt,quat)
     syms q0(t) q1(t) q2(t) q3(t)
@@ -149,8 +145,6 @@ end
 
 % Body frame formulation - exponential approximation
 function [new_quat] = quat_exp_approx_body(omega,dt)
-    %quat0 = [1; 0; 0; 0];
-    
     new_quat = [1;omega*dt/2];
 end
 
@@ -163,17 +157,3 @@ function [q_mul] = mult_quat(q1,q2)
     
     q_mul = q_mul_0/norm(q_mul_0);
 end
-
-%{
-function [eul_ang] = quat_to_angles(quat)
-    q=quat;
-    %{
-    eul_ang = [atan(2*(q(1)*q(4)+q(2)*q(3))/(1-2*(q(3)^2+q(4)^2)));...
-        asin(2*(q(1)*q(3)-q(2)*q(4)));
-        atan(2*(q(1)*q(2)+q(3)*q(4))/(1-2*(q(2)^2+q(3)^2)))];
-    %}
-    eul_ang = [atan2(2*(q(3)*q(4)+q(1)*q(2)),q(1)^2+q(4)^2-q(2)^2-q(3)^2);...
-        -asin(2*(q(2)*q(4)-q(1)*q(3)));...
-        atan2(2*(q(2)*q(3)+q(1)*q(4)),q(1)^2+q(2)^2-q(3)^2-q(4)^2)];
-end
-%}
